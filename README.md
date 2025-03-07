@@ -29,6 +29,10 @@ The script also calculates the following data based on the coordinates (features
 * Trackpoint count
 * Waypoint count
 
+## Run & Troubleshoot
+
+This uses built-in Python libraries. To run on Python for Linux and older versions of Python for Windows, you may need to install tkinter module for Windows and python3-tk for Linux.
+
 ## Usage
 
 Run the gnx2cnx.py script or gnx2cnx.exe (from the release) to start the GUI. Browse and open your files. The converted files will be placed in the same directory as the original files, in a subfolder called 'cnx_routes'.

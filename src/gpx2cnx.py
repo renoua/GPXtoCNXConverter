@@ -23,7 +23,7 @@ class GPX2CNX:
         self.status_label = tk.Label(root, text="", width=30)
         self.status_label.grid(row=4, column=1, columnspan=3, sticky="ew", padx=25, pady=5)
 
-        self.button1 = tk.Button(root, text="GPX -> CNX", command=lambda:[self.status_label.config(text=""), self.select_files()])
+        self.button1 = tk.Button(root, text="GPX -> CNX", command=lambda: [self.status_label.config(text=""), self.select_files()])
         self.button1.grid(row=1, column=1, columnspan=1, sticky="ew", padx=25, pady=5)
 
         self.button2 = tk.Button(root, text="POI TYPES EDITOR", command=self.poi_editor)
@@ -59,7 +59,7 @@ class GPX2CNX:
         textinfo = ""
         flogout = 0
         try:
-            with open("log.txt", "r") as logtxt:
+            with open("log.txt", "r", encoding="utf-8") as logtxt:
                 textinfo = logtxt.read()
                 flogout = 1
         except FileNotFoundError:
@@ -103,11 +103,10 @@ class GPX2CNX:
 
     # Converts a list of GPX files to CNX xml format
     def convert_gpx2cnx(self, gpx_files):
-        output_dir= os.path.join(os.path.normpath(os.path.split(gpx_files[0])[0]),'cnx_routes')
+        output_dir = os.path.join(os.path.normpath(os.path.split(gpx_files[0])[0]), 'cnx_routes')
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        log = "gpx2cnx.py log"
         self.results = []
         for gpx_file in gpx_files:
             try:
@@ -171,10 +170,10 @@ class GPX2CNX:
                     first_lon = track_points[0]['lon']
                     first_ele = (track_points[0]['ele'] * 100).quantize(Decimal('1'), decimal.ROUND_HALF_UP)
 
-                    relative_points = [f"{first_lat},{first_lon},{first_ele}"] # First Point - Absolute Coordinates
+                    relative_points = [f"{first_lat},{first_lon},{first_ele}"]  # First Point - Absolute Coordinates
 
                     first_diffs = []
-                    for i in range(1, len(track_points)): # Calc first diffs
+                    for i in range(1, len(track_points)):  # Calc first diffs
                         lat1 = track_points[i-1]['lat']
                         lon1 = track_points[i-1]['lon']
                         lat2 = track_points[i]['lat']
@@ -186,14 +185,14 @@ class GPX2CNX:
 
                         first_diffs.append((lat_diff, lon_diff, ele_diff))
 
-                        if i == 1: # Second Point
+                        if i == 1:  # Second Point
                             lat_diff = lat_diff.quantize(Decimal('1'), decimal.ROUND_HALF_UP)
                             lon_diff = lon_diff.quantize(Decimal('1'), decimal.ROUND_HALF_UP)
                             ele_diff = ele_diff.quantize(Decimal('1'), decimal.ROUND_HALF_UP)
 
                             relative_points.append(f"{lat_diff},{lon_diff},{ele_diff}")
 
-                    for i in range(1, len(first_diffs)): # Calc second diffs
+                    for i in range(1, len(first_diffs)):  # Calc second diffs
                         lat_diff = (first_diffs[i][0] - first_diffs[i-1][0]).quantize(Decimal('1'), decimal.ROUND_HALF_UP)
                         lon_diff = (first_diffs[i][1] - first_diffs[i-1][1]).quantize(Decimal('1'), decimal.ROUND_HALF_UP)
                         ele_diff = (first_diffs[i][2]).quantize(Decimal('1'), decimal.ROUND_HALF_UP)
@@ -216,7 +215,8 @@ class GPX2CNX:
 
                 if relative_points:
                     tracks_str = ';'.join(relative_points)
-                    ET.SubElement(route, 'Tracks').text = tracks_str
+                    format_tracks_str = tracks_str + ';'  # Line-ending delimiter as in native CNX
+                    ET.SubElement(route, 'Tracks').text = format_tracks_str
                 else:
                     ET.SubElement(route, 'Tracks').text = ""
 
@@ -228,16 +228,17 @@ class GPX2CNX:
                     point = ET.SubElement(points, 'Point')
                     ET.SubElement(point, 'Lat').text = str(wpt['lat'])
                     ET.SubElement(point, 'Lng').text = str(wpt['lon'])
-                    ET.SubElement(point, 'Type').text = '0' # Type 0 - point marker without differentiation by purpose
+                    ET.SubElement(point, 'Type').text = '0'  # Type 0 - point marker without differentiation by purpose
                     ET.SubElement(point, 'Descr').text = wpt['name']
 
                 filename = os.path.splitext(os.path.basename(gpx_file))[0]
                 trim_filename = filename[:18]
                 output_filename = os.path.join(output_dir, f"route_{trim_filename}.cnx")
                 xml_string = self.prettify(route)
+                format_xml_string = xml_string.replace("<Navs/>", "<Navs />")  # Format the XML tag like in native CNX
                 with codecs.open(output_filename, "w", encoding='utf-8-sig') as f:
                     f.write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n')
-                    f.write(xml_string[xml_string.find('<Route'):])
+                    f.write(format_xml_string[format_xml_string.find('<Route'):])
 
                 self.results.append(f"-- {gpx_file} -> SUCCESS")
                 self.rstat = 1

@@ -1,6 +1,6 @@
 # main.py
 import tkinter as tk
-import src.gpx2cnx as G2C
+import gpx2cnx as G2C
 
 # Run App
 root = tk.Tk()
